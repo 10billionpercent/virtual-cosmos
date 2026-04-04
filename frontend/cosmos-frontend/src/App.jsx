@@ -1,26 +1,16 @@
 import { useState } from "react";
+import Signup from "./components/Signup";
 import Cosmos from "./components/Cosmos";
+import "./index.css";
 
 function App() {
   const [avatar, setAvatar] = useState(null);
 
-  const handleUpload = (e) => {
-    const file = e.target.files[0];
-    const url = URL.createObjectURL(file);
-    setAvatar(url);
-  };
+  if (!avatar) {
+    return <Signup onComplete={setAvatar} />;
+  }
 
-  return (
-    <div>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleUpload}
-      />
-
-      <Cosmos avatar={avatar} />
-    </div>
-  );
+  return <Cosmos avatar={avatar} />;
 }
 
 export default App;

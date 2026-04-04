@@ -15,6 +15,9 @@ const Cosmos = ({ avatar }) => {
       await app.init({
         resizeTo: window,
         background: "#111827",
+        resolution: window.devicePixelRatio,
+        autoDensity: true,
+        roundPixels: true,
       });
 
       if (!mounted || !canvasRef.current) return;
@@ -23,14 +26,18 @@ const Cosmos = ({ avatar }) => {
       appRef.current = app;
 
       const texture = avatar
-  ? await new Promise((resolve) => {
-      const img = new Image();
-      img.src = avatar;
-      img.onload = () => {
-        resolve(PIXI.Texture.from(img));
-      };
-    })
-  : PIXI.Texture.WHITE;
+        ? await new Promise((resolve) => {
+            const img = new Image();
+            img.src = avatar;
+            img.onload = () => {
+              resolve(PIXI.Texture.from(img));
+            };
+          })
+        : PIXI.Texture.WHITE;
+
+      texture.source.style.scaleMode = "linear";
+      texture.source.style.mipmap = "off";
+      texture.source.resolution = window.devicePixelRatio;
 
       const marker = createMarker(texture);
 

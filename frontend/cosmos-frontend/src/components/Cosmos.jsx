@@ -13,12 +13,12 @@ const Cosmos = ({ avatar }) => {
       const app = new PIXI.Application();
 
       await app.init({
-        resizeTo: window,
-        background: "#111827",
-        resolution: window.devicePixelRatio,
-        autoDensity: true,
-        roundPixels: true,
-      });
+  resizeTo: window,
+  background: "#111827",
+  resolution: window.devicePixelRatio,
+  autoDensity: true,
+  antialias: true,
+});
 
       if (!mounted || !canvasRef.current) return;
 

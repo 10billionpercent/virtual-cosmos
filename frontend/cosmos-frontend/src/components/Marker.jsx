@@ -26,11 +26,14 @@ const createMarker = (texture) => {
     .circle(0, 0, 30)
     .fill(0xffffff);
 
+  mask.resolution = window.devicePixelRatio;
   avatar.mask = mask;
 
   const border = new PIXI.Graphics()
     .circle(0, 0, 30)
     .stroke({ width: 3, color: 0xffffff });
+
+  border.resolution = window.devicePixelRatio;
 
   const triangle = new PIXI.Graphics()
     .poly([
@@ -39,11 +42,12 @@ const createMarker = (texture) => {
         0, 44
     ])
     .fill(0xffffff);
-
+ 
+  triangle.resolution = window.devicePixelRatio;
   container.addChild(triangle);
-container.addChild(mask);
-container.addChild(avatar);
-container.addChild(border);
+  container.addChild(mask);
+  container.addChild(avatar);
+  container.addChild(border);
 
   return container;
 };

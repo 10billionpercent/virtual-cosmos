@@ -4,7 +4,7 @@ import createMarker from "./Marker";
 import socket from "../socket";
 import Chat from "./Chat";
 
-const Cosmos = ({ avatar, nickname, onExit }) => {
+const Cosmos = ({ avatar, nickname, color, onExit, onUpdateUser }) => {
   const canvasRef = useRef(null);
   const appRef = useRef(null);
   const playersRef = useRef(new Map());
@@ -22,7 +22,7 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
       // 2. Initialize
       await app.init({
         resizeTo: window,
-        background: "#00010a",
+        background: "#000108ff",
         antialias: true,
         resolution: window.devicePixelRatio || 1,
         autoDensity: true,
@@ -63,12 +63,14 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
       const addPlayer = (p, isLocal) => {
         if (!playersRef.current || playersRef.current.has(p.id)) return;
 
-        const marker = createMarker(PIXI.Texture.WHITE);
+        const pColor = isLocal ? color : p.color;
+        const marker = createMarker(PIXI.Texture.WHITE, isLocal, pColor);
         marker.x = p.x;
         marker.y = p.y;
         marker.playerId = p.id;
         marker.nickname = p.nickname || "Explorer";
         marker.setNickname(marker.nickname);
+        marker.alpha = 0; // Start invisible for fade-in
         
         app.stage.addChild(marker);
         playersRef.current.set(p.id, marker);
@@ -86,19 +88,52 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
       socket.on("current-players", (players) => {
         Object.values(players).forEach(p => addPlayer(p, p.id === socket.id));
       });
-      socket.on("player-joined", p => addPlayer(p, false));
+      socket.on("player-joined", p => addPlayer(p, p.id === socket.id));
       socket.on("player-moved", p => {
         const m = playersRef.current?.get(p.id);
         if (m && p.id !== socket.id) { m.x = p.x; m.y = p.y; }
       });
       socket.on("player-left", id => {
         const m = playersRef.current?.get(id);
-        if (m) { app.stage.removeChild(m); playersRef.current.delete(id); }
+        if (m) { m.isLeaving = true; } // Trigger fade-out instead of instant removal
       });
 
-      socket.emit("join", { avatar, nickname });
+      socket.on("join-success", (data) => {
+        const checkMarker = () => {
+          const me = playersRef.current?.get(socket.id);
+          if (me) {
+            console.log("Syncing unique nickname to marker:", data.nickname);
+            me.nickname = data.nickname;
+            me.setNickname(data.nickname);
+          } else {
+            // Marker might not be ready yet, retry in 100ms
+            setTimeout(checkMarker, 100);
+          }
+        };
+        checkMarker();
+        if (onUpdateUser) onUpdateUser({ nickname: data.nickname });
+      });
 
-      const tickerCallback = () => {
+      socket.emit("join", { avatar, nickname, color });
+
+      const tickerCallback = (ticker) => {
+        const delta = ticker.deltaTime;
+
+        // --- Animations (Fade In/Out) ---
+        playersRef.current.forEach((m, id) => {
+          if (m.isLeaving) {
+            m.alpha -= 0.05 * delta;
+            if (m.alpha <= 0) {
+              app.stage.removeChild(m);
+              playersRef.current.delete(id);
+              m.destroy({ children: true });
+            }
+          } else if (m.alpha < 1) {
+            m.alpha += 0.04 * delta;
+            if (m.alpha > 1) m.alpha = 1;
+          }
+        });
+
         const me = playersRef.current?.get(socket.id);
         
         // Ensure app.screen has dimensions before centering
@@ -106,25 +141,65 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
         const sh = app.screen.height || window.innerHeight;
 
         if (me) {
-          let moved = false;
+          let dx = 0;
+          let dy = 0;
           const speed = 5;
-          if (keys.current["w"] || keys.current["ArrowUp"]) { me.y -= speed; moved = true; }
-          if (keys.current["s"] || keys.current["ArrowDown"]) { me.y += speed; moved = true; }
-          if (keys.current["a"] || keys.current["ArrowLeft"]) { me.x -= speed; moved = true; }
-          if (keys.current["d"] || keys.current["ArrowRight"]) { me.x += speed; moved = true; }
+          if (keys.current["w"] || keys.current["ArrowUp"]) { dy -= speed; }
+          if (keys.current["s"] || keys.current["ArrowDown"]) { dy += speed; }
+          if (keys.current["a"] || keys.current["ArrowLeft"]) { dx -= speed; }
+          if (keys.current["d"] || keys.current["ArrowRight"]) { dx += speed; }
 
-          if (moved) socket.emit("move", { x: me.x, y: me.y });
+          let nextX = me.x + dx;
+          let nextY = me.y + dy;
+          let finalMoved = false;
+
+          // Advanced Collision & Internal Separation
+          playersRef.current.forEach((other, otherId) => {
+            if (otherId === socket.id) return;
+            
+            const dist = Math.hypot(me.x - other.x, me.y - other.y);
+            const SAFE_DIST = 85;
+
+            if (dist < SAFE_DIST) {
+              // 1. SOFT REPEL: Move slightly away if overlapping (resolves spawn-on-top)
+              const angle = Math.atan2(me.y - other.y, me.x - other.x);
+              const pushPower = 1.5;
+              me.x += Math.cos(angle) * pushPower;
+              me.y += Math.sin(angle) * pushPower;
+              finalMoved = true;
+            }
+
+            // 2. INTELLIGENT BLOCK: Check if user input makes collision WORSE
+            if (dx !== 0 || dy !== 0) {
+              const nextDistX = Math.hypot(nextX - other.x, me.y - other.y);
+              const nextDistY = Math.hypot(me.x - other.x, nextY - other.y);
+
+              // If next move is inside range AND closer than current position, block it
+              if (nextDistX < SAFE_DIST && nextDistX < dist) dx = 0;
+              if (nextDistY < SAFE_DIST && nextDistY < dist) dy = 0;
+            }
+          });
+
+          if (dx !== 0 || dy !== 0) {
+            me.x += dx;
+            me.y += dy;
+            finalMoved = true;
+          }
+
+          if (finalMoved) {
+            socket.emit("move", { x: me.x, y: me.y });
+          }
           
           // Center Camera
           app.stage.pivot.x = me.x - sw / 2;
           app.stage.pivot.y = me.y - sh / 2;
 
-          // Proximity
+          // Proximity - LENIENT RANGE for better syncing (140)
           const nearby = [];
           playersRef.current.forEach((m, id) => {
             if (id === socket.id) return;
             const dist = Math.hypot(m.x - me.x, m.y - me.y);
-            if (dist < 100) {
+            if (dist < 140) {
               nearby.push({ id, nickname: m.nickname });
               m.setHighlight(true);
             } else {
@@ -149,6 +224,7 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
         window.removeEventListener("keydown", down);
         window.removeEventListener("keyup", up);
         app.ticker.remove(tickerCallback);
+        socket.emit("leave");
       };
     };
 
@@ -165,10 +241,12 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
       socket.off("player-joined");
       socket.off("player-moved");
       socket.off("player-left");
+      socket.off("join-success");
     };
-  }, [avatar, nickname]);
+  }, []);
 
   const handleExit = () => {
+    socket.emit("leave");
     onExit();
   };
 
@@ -179,7 +257,7 @@ const Cosmos = ({ avatar, nickname, onExit }) => {
       </button>
 
       <div ref={canvasRef} style={{ width: "100%", height: "100vh", position: "fixed", inset: 0, background: "#00010a" }} />
-      {nearbyPlayers.length > 0 && <Chat nearby={nearbyPlayers} localNickname={nickname} />}
+      <Chat nearby={nearbyPlayers} localNickname={nickname} />
     </>
   );
 };

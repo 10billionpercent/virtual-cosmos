@@ -16,7 +16,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 18px;
   border: none;
 }
 
@@ -149,6 +149,35 @@ button:disabled {
   box-shadow: none;
 }
 
+.color-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.color-orb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.color-orb:hover {
+  transform: scale(1.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 20px currentColor; /* We will use style={{color: c}} in JS */
+}
+
+.color-orb.active {
+  transform: scale(1.15);
+  border-color: white;
+  box-shadow: 0 0 25px currentColor;
+}
+
 /* Chat UI */
 .chat-container {
   position: fixed;
@@ -197,6 +226,8 @@ button:disabled {
   display: flex;
   flex-direction: column;
   max-width: 85%;
+  margin-top: 2px;
+  align-items: flex-start; /* Ensure non-own labels start at the left */
 }
 
 .message.own {
@@ -204,37 +235,54 @@ button:disabled {
   align-items: flex-end;
 }
 
+.message.first {
+  margin-top: 16px;
+}
+
+.message.continuation {
+  margin-top: 2px;
+}
+
 .user-id {
   font-size: 0.72rem;
-  color: #818cf8; /* Distinct Indigo for Others */
+  color: #a5b4fc; /* Bright Indigo-Blue for others */
   margin-bottom: 4px;
-  font-weight: 800;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.9;
+  letter-spacing: 0.08em;
+  opacity: 1;
+  display: block;
+  text-shadow: 0 0 10px rgba(165, 180, 252, 0.3);
 }
 
 .own .user-id {
-  color: #3b82f6; /* Clearer Blue for You */
-  opacity: 1;
+  color: #60a5fa; /* Original Blue for You */
 }
 
 .text {
   padding: 10px 14px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  border-bottom-left-radius: 4px;
+  border-radius: 18px;
   color: #f1f5f9;
   font-size: 0.95rem;
   line-height: 1.5;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .own .text {
   background: #3b82f6;
   color: white;
-  border-radius: 14px;
-  border-bottom-right-radius: 4px;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* WhatsApp Grouping: Top Rounded corners for first messages */
+.message.first .text {
+  border-top-left-radius: 4px;
+}
+
+.message.own.first .text {
+  border-top-left-radius: 18px;
+  border-top-right-radius: 4px;
 }
 
 .chat-input-row {

@@ -1,22 +1,27 @@
 import * as PIXI from "pixi.js";
 
-const createMarker = (texture) => {
+const createMarker = (texture, isLocal = false, color) => {
   const container = new PIXI.Container();
 
-  // 1. Proximity Glow (Background)
+  // Parse HEX to Number for PIXI Graphics
+  const tint = typeof color === 'string' ? parseInt(color.replace('#', '0x')) : (isLocal ? 0x3b82f6 : 0xffffff);
+
+  // 1. Proximity Glow (More diffused and gentle)
   const glow = new PIXI.Graphics()
-    .circle(0, 0, 40)
-    .fill({ color: 0x3b82f6, alpha: 0.4 });
+    .circle(0, 0, 45).fill({ color: tint, alpha: 0.15 })
+    .circle(0, 0, 55).fill({ color: tint, alpha: 0.1 })
+    .circle(0, 0, 65).fill({ color: tint, alpha: 0.05 });
   glow.visible = false;
   container.addChild(glow);
 
-  // 2. Pin Point (Behind the circle)
+  // 2. Pin Point - Different color for YOU vs OTHERS
+  // Blue for the user themselves, White for strangers.
   const triangle = new PIXI.Graphics()
     .poly([-15, 20, 15, 20, 0, 44])
-    .fill({ color: 0xffffff });
+    .fill({ color: tint });
   container.addChild(triangle);
 
-  // 3. Avatar Base & Sprite
+  // 3. Avatar
   const avatar = new PIXI.Sprite(texture);
   avatar.anchor.set(0.5);
   const size = 60;
@@ -41,29 +46,29 @@ const createMarker = (texture) => {
   container.addChild(mask);
   container.addChild(avatar);
 
-  // 3. High Visibility Border
+  // 3. Border
   const border = new PIXI.Graphics()
     .circle(0, 0, 30)
-    .stroke({ width: 4, color: 0xffffff });
+    .stroke({ width: 4, color: tint });
   container.addChild(border);
 
   // 4. Nickname Label
   const style = new PIXI.TextStyle({
-    fontFamily: 'sans-serif',
+    fontFamily: 'Plus Jakarta Sans, sans-serif',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
     fill: 0xffffff,
     stroke: { color: 0x000000, width: 4 }
   });
 
-  const nameLabel = new PIXI.Text({ text: "Explorer", style });
+  const nameLabel = new PIXI.Text({ text: isLocal ? "You" : "Explorer", style });
   nameLabel.anchor.set(0.5);
   nameLabel.y = -55;
   container.addChild(nameLabel);
 
   // Helper Methods
   container.setNickname = (name) => {
-    nameLabel.text = name;
+    nameLabel.text = isLocal ? `${name} (You)` : name;
   };
 
   container.setAvatar = (newTexture) => {
@@ -73,12 +78,11 @@ const createMarker = (texture) => {
 
   container.setHighlight = (active) => {
     glow.visible = active;
+    // Boost border width when highlighted
     if (active) {
-      border.clear().circle(0,0,30).stroke({ width: 4, color: 0x3b82f6 });
-      triangle.clear().poly([-15, 20, 15, 20, 0, 44]).fill({ color: 0x3b82f6 });
+      border.clear().circle(0,0,30).stroke({ width: 6, color: tint });
     } else {
-      border.clear().circle(0,0,30).stroke({ width: 4, color: 0xffffff });
-      triangle.clear().poly([-15, 20, 15, 20, 0, 44]).fill({ color: 0xffffff });
+      border.clear().circle(0,0,30).stroke({ width: 4, color: tint });
     }
   };
 

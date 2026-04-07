@@ -3,6 +3,14 @@ import { useState } from "react";
 const Signup = ({ onComplete }) => {
   const [avatar, setAvatar] = useState(null);
   const [nickname, setNickname] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#fa2727");
+
+  const colors = [
+    "#fa2727", "#fa9727", "#fad027", "#ccfa27",
+    "#4efa27", "#27fa9f", "#27fad7", "#27adfa",
+    "#2778fa", "#6327fa", "#9b27fa", "#c527fa",
+    "#fa27f3", "#fa27c9", "#c75f03", "#b1a9a3"
+  ];
 
   const handleUpload = (e) => {
     const file = e.target.files[0];
@@ -34,7 +42,11 @@ const Signup = ({ onComplete }) => {
 
   const handleEnter = () => {
     if (avatar && nickname.trim()) {
-      onComplete({ avatar, nickname: nickname.trim() });
+      onComplete({ 
+        avatar, 
+        nickname: nickname.trim(), 
+        color: selectedColor 
+      });
     }
   };
 
@@ -60,6 +72,20 @@ const Signup = ({ onComplete }) => {
           onChange={(e) => setNickname(e.target.value)}
           maxLength={15}
         />
+      </div>
+
+      <div className="signup-input-group">
+        <label>Signature Color</label>
+        <div className="color-selector">
+          {colors.map(c => (
+            <div 
+              key={c}
+              className={`color-orb ${selectedColor === c ? "active" : ""}`}
+              style={{ backgroundColor: c, color: c }}
+              onClick={() => setSelectedColor(c)}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="signup-input-group">

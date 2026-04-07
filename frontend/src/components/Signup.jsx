@@ -67,7 +67,7 @@ const Signup = ({ onComplete }) => {
         <label>Choose a nickname</label>
         <input 
           type="text" 
-          placeholder="e.g. StarLord" 
+          placeholder="e.g. Fullmetal" 
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           maxLength={15}

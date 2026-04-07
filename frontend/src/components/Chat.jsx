@@ -87,9 +87,10 @@ const Chat = ({ nearby, localNickname }) => {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message..."
+          placeholder={nearby.length > 0 ? "Type a message..." : "No one nearby to hear you..."}
+          disabled={nearby.length === 0}
         />
-        <button type="submit">Send</button>
+        <button type="submit" disabled={nearby.length === 0}>Send</button>
       </form>
     </div>
   );

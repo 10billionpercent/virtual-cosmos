@@ -60,7 +60,7 @@ const Signup = ({ onComplete }) => {
         )}
       </div>
 
-      <h1>Join the Cosmos</h1>
+      <h1>Join the Virtual Cosmos</h1>
       <h2>Secure your identity before jumping in</h2>
 
       <div className="signup-input-group">

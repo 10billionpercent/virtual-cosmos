@@ -74,11 +74,14 @@ Ensure you have **Node.js (v16+)** and **npm** installed.
 
 ## 📸 Screenshots
 
-### Signup Screen <img width="968" height="904" alt="image" src="https://github.com/user-attachments/assets/8687575f-5b9d-4ec1-bbf8-224a690a05f4" />
+### Signup Screen
+<img width="968" height="904" alt="image" src="https://github.com/user-attachments/assets/8687575f-5b9d-4ec1-bbf8-224a690a05f4" />
 
-### Chat disabled with one user <img width="1919" height="960" alt="image" src="https://github.com/user-attachments/assets/47a995af-aaeb-40f0-b1ea-9e46223a11be" />
+### Chat disabled with one user 
+<img width="1919" height="960" alt="image" src="https://github.com/user-attachments/assets/47a995af-aaeb-40f0-b1ea-9e46223a11be" />
 
-### Chat enabled when users are in proximity <img width="1919" height="1016" alt="image" src="https://github.com/user-attachments/assets/b0d66006-2659-48f6-be79-4d38c9f25b37" />
+### Chat enabled when users are in proximity 
+<img width="1919" height="1016" alt="image" src="https://github.com/user-attachments/assets/b0d66006-2659-48f6-be79-4d38c9f25b37" />
 
 
 
